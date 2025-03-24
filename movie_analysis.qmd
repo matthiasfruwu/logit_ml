@@ -1,0 +1,134 @@
+
+---
+title: "Predicting Box Office Bombs: A Logistic Regression Analysis"
+author: "Your Name"
+date: "`r Sys.Date()`"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+bibliography: references.bib
+---
+
+# Introduction
+
+This report explores the factors influencing whether movies become "box office bombs" using logistic regression. We utilize a dataset containing various attributes such as runtime, critic scores, budget, and distribution types. Predicting movie success or failure aids studios in decision-making to mitigate financial risks [@james2021, @kuhn2022].
+
+## Research Question
+
+What factors significantly predict whether a movie will fail financially (become a box office bomb)?
+
+## Dataset Overview
+
+```{r}
+#| echo: true
+source("helpers.R")
+
+df_movie <- read_and_prepare_movie_data("movie_select.csv")
+
+df_movie %>% 
+  select(title, budget, domestic, runtime, audience_score, critic_score, is_bo_bomb) %>% 
+  arrange(-budget) %>% head(7)
+```
+
+# Exploratory Data Analysis (EDA)
+
+## Distributions and Insights
+
+We first examine distributions of key variables, helping us understand the nature of our predictors.
+
+```{r}
+#| echo: false
+#| fig-width: 7
+#| fig-height: 7
+#| fig-align: center
+library(ggplot2)
+library(patchwork)
+
+distribution_plots(df_movie)
+```
+
+From the plots, we notice distinct patterns in runtime, critic scores, indie movies, and box office bombs.
+
+## Relationships and Correlations
+
+Investigating correlations allows us to identify multicollinearity or redundant variables.
+
+```{r}
+#| echo: true
+correlation_matrix(df_movie)
+```
+
+Runtime and critic scores appear moderately correlated with box office performance.
+
+# Methodology
+
+## Logistic Regression Model
+
+To predict box office failures, we use logistic regression, which models binary outcomes (bomb or not).
+
+The logistic regression equation is defined as follows [@james2021]:
+
+$$
+\log\left(\frac{p}{1 - p}\right) = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \dots + \beta_k X_k
+$$
+
+where $p$ is the probability of a movie becoming a box office bomb.
+
+## Model Specification
+
+We include predictors based on their relevance and data availability:
+
+- Runtime
+- IMDb average rating
+- Audience score
+- Critic score
+- Independent distributor status (Indie)
+- Genre indicators (Action, Animation)
+
+# Results
+
+## Model Estimation
+
+We fit the logistic regression model and interpret the results:
+
+```{r}
+#| echo: true
+logit_model <- glm(is_bo_bomb ~ runtime + imdb_avg_rating + 
+                     audience_score + critic_score + is_indie + 
+                     ge_action + ge_animation,
+                   data = df_movie,
+                   family = binomial)
+
+summary(logit_model)
+```
+
+The output above highlights significant predictors influencing box office performance.
+
+## Model Evaluation
+
+To evaluate our logistic model, we use McFadden's R² as a goodness-of-fit measure:
+
+```{r}
+#| echo: true
+library(pscl)
+pscl::pR2(logit_model)
+```
+
+McFadden's R² above 0.2 generally indicates good fit [@hosmer2013].
+
+## Interpretation of Key Predictors
+
+- **Critic Score:** Higher critic scores significantly reduce the likelihood of a bomb.
+- **Runtime:** Longer runtimes modestly increase failure risks.
+- **Independent Distribution:** Independent movies show increased risks, possibly due to lower marketing budgets.
+
+# Discussion
+
+The results suggest that critical reception and runtime play vital roles. Studios might reconsider overly lengthy films or films without mainstream backing if minimizing financial risk is essential.
+
+# Conclusion
+
+Our logistic regression analysis effectively identified crucial variables that predict box office failures, thus providing valuable insights for film industry stakeholders.
+
+# References

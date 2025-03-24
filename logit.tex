@@ -200,13 +200,13 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
-  pdftitle={Logistic Regression in R},
+  pdftitle={Logistic Regression in R + Quarto Docs},
   pdfauthor={Matthias Frühwirth},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
 
-\title{Logistic Regression in R}
+\title{Logistic Regression in R + Quarto Docs}
 \subtitle{\href{./index.html}{Data Literacy}}
 \author{Matthias Frühwirth}
 \date{}
@@ -554,6 +554,10 @@ glm(formula = is_bo_bomb ~ runtime + imdb_avg_rating + audience_score +
     critic_score + is_indie + ge_action + ge_animation, family = binomial, 
     data = df_movie)
 
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.6731  -0.7543  -0.5323  -0.2811   2.8183  
+
 Coefficients:
                  Estimate Std. Error z value   Pr(>|z|)    
 (Intercept)      1.470635   0.543181   2.707   0.006780 ** 
@@ -864,6 +868,84 @@ Prediction  Yes   No
 \item
   We could try to add or engineer more features (regressors) like
   interaction terms, ``text-based stuff'' and crew info.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Intro to Quarto Documents}
+\phantomsection\label{intro-to-quarto-documents}
+\small
+
+\begin{itemize}
+\tightlist
+\item
+  Quarto documents are very similar to Quarto Presentations
+\item
+  perfect for writing assignments, reports, your empirical thesis
+\item
+  yaml (beginning of document) for PDF with Table of Contents, numbered
+  sections and external bibliography
+\end{itemize}
+
+\footnotesize
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\PreprocessorTok{{-}{-}{-}}
+\FunctionTok{title}\KeywordTok{:}\AttributeTok{ }\StringTok{"Predicting Box Office Bombs: A Logistic Regression Analysis"}
+\FunctionTok{author}\KeywordTok{:}\AttributeTok{ }\StringTok{"Matthias"}
+\FunctionTok{date}\KeywordTok{:}\AttributeTok{ }\StringTok{"2025{-}03{-}25"}
+\FunctionTok{format}\KeywordTok{:}
+\AttributeTok{  }\FunctionTok{pdf}\KeywordTok{:}
+\AttributeTok{    }\FunctionTok{toc}\KeywordTok{:}\AttributeTok{ }\CharTok{true}
+\AttributeTok{    }\FunctionTok{number{-}sections}\KeywordTok{:}\AttributeTok{ }\CharTok{true}
+\FunctionTok{bibliography}\KeywordTok{:}\AttributeTok{ references.bib}
+\PreprocessorTok{{-}{-}{-}}
+\end{Highlighting}
+\end{Shaded}
+
+\small
+
+\begin{itemize}
+\tightlist
+\item
+  Sections and Subsections are created by using \#Section and
+  \#\#Subsection (similar to Quarto Pres)
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Referencing}
+\phantomsection\label{referencing}
+\small
+
+\begin{itemize}
+\item
+  Quarto automatically generates the ``References'' section at the end
+  of your document, if you do the following:
+\item
+  Create a file called \texttt{references.bib} and add it in your YAML
+  settings (see Slide before)
+\item
+  Add a reference in BibTex format to you reference file
+
+  \scriptsize
+
+\begin{verbatim}
+@article{smith2020,
+author = {Smith, John},
+title = {Predicting Movie Success with Machine Learning},
+journal = {Journal of Data Science},
+year = {2020},
+volume = {18},
+pages = {101-115}
+}
+\end{verbatim}
+
+  \small
+\item
+  Cite with:
+
+  \footnotesize As shown in recent studies \texttt{{[}@smith2020{]}},
+  and following \texttt{@smith2020}
 \end{itemize}
 \end{frame}
 
