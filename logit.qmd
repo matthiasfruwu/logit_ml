@@ -1,0 +1,395 @@
+---
+title: 'Logistic Regression in R'
+subtitle: '[Data Literacy](./index.html)'
+author: 
+- Matthias Frühwirth
+institute: 
+- '[Institute for Retailing & Data Science](https://www.wu.ac.at/retail/)'
+format:
+  beamer:
+    fontsize: "10pt"
+    keep-tex: true
+    slide-level: 2
+    code-block-font-size: \tiny
+    header-includes: |
+      \linespread{1.15}
+      \usepackage{xcolor} % load xcolor for color commands
+      \setbeamertemplate{itemize item}{\raise0.5pt\hbox{\textcolor{black}{$\bullet$}}}
+      \setbeamerfont{frametitle}{size=\large}
+---
+
+## Recap and Intro
+
+Last week
+
+-   Causal Inference
+-   DAGs & Diff-in-Diff
+-   Quarto Presentations
+
+Today
+
+-   Logistic Regression
+-   Quarto Documents
+
+## Intro to Logistic Regression (Logit)
+
+Logistic Regression
+
+-   Can be used if outcome is a binary variable (e.g. 1 = Purchase Complete, 0 = Cart Abandoned)
+
+-   Generalized Linear Model (linear regression + non-linear link function, marginal effects are non-linear)
+
+-   Interested in modelling probabilities of outcomes:
+
+    Q: *"How does making payment one-click affect the probability that the purchase is completed"? What about browsing time on the website?*
+
+-   Sits right at the intersection of econometrics and machine learning
+
+-   Widely used baseline for inference, prediction/classification with category outcomes
+
+## Graphical
+
+![](images/linear-regression-vs-logistic-regression.png){width="350"}
+
+As we change X, we change the probability that Y becomes 1.
+
+## Basics
+
+-   We assume that the outcome is Bernoulli distributed (outcome of a Bernoulli trial): this means with probability $p$ the outcome is 1 and with probability $1-p$ it is 0.
+
+-   We are interested in $p$, so logistic regression models the probability of a binary outcome (Y = 0, 1). Probability Form:
+
+$$
+  P(Y = 1 \mid X) = \frac{1}{1 + e^{-\textcolor{blue}{\beta_0 + \beta_1 X_1 + \dots + \beta_k X_k}}}
+$$
+
+-   Equivalent log odds form: The model assumes a **logit (log-odds) link** between predictors and the probability:
+
+$$
+\log\left(\frac{P(Y = 1 \mid X)}{1 - P(Y = 1 \mid X)}\right) = \textcolor{blue}{\beta_0 + \beta_1 X_1 + \dots + \beta_k X_k}
+$$
+
+## Odds and Interpretation
+
+\small
+
+-   We can interpret a coefficient $\beta_k$ as changes to the log-odds; and $\exp(\beta_k)$ as changes to odds. $$
+    \log\left(\underbrace{\frac{P(Y = 1 \mid X)}{1 - P(Y = 1 \mid X)}}_{\text{Odds}}\right) = \beta_0 + \beta_1 X_1 + \dots + \beta_k X_k.
+    $$
+
+-   Odds reflect how likely an event is compared to it not happening ("ratio of 1 to 0"), rather than its share of all outcomes (which would be the probability).
+
+-   **Example**: The baseline odds for 100 customers (20 purchase complete, 80 cart abandoned). Then you estimate $\beta_k = 0.5$:
+
+$$
+  \text{Odds} = \frac{20}{80} = 0.25 \quad\quad e^{\beta_k = 0.5} \approx 1.65 \quad\quad \text{New Odds} = 0.25 \times 1.65 \approx 0.4125.
+$$
+
+-   For a one-unit increase in $\beta_k$, the odds increase by about $(\exp(\beta) - 1) \cdot 100 \% = 65\%$. However, the effect on the actual probability depends on the starting value of the regressors.
+
+## Probabilites
+
+\small
+
+-   Coefficients from the regression output can be directly interpreted as changes to (log-)odds. If $\beta_1$ \> 0, odds increase, as well as probabilities (and reverse). The change does not depend on the actual level of X.
+
+-   The reason: Odds are multiplicative, log-odds are additive (changes are "just added").
+
+-   However, the change in the outcome probability P($Y = 1 \mid X$) depends on the starting level of the covariates.
+
+-   Also note: $$
+    P(Y = 1) = \frac{\text{Odds}}{1 + \text{Odds}}
+    $$
+
+-   Previous Example (odds before: $0.25$, odds after: $0.41$)
+
+$$
+p_{\text{1}} = \frac{20}{20+80} = \frac{0.25}{1 + 1.25} = 0.2, \quad  p_{\text{new}} \approx \frac{0.4125}{1.4125} \approx 0.291.
+$$
+
+-   Interpretation: For the given baseline probability/odds, increasing the explanatory variable by one unit increases the probability of $Y$ by approx. $9.1\%$.
+
+## How to do in R:
+
+\footnotesize
+
+-   Use the `glm` (generalized linear models) function from base R.
+
+```{r}
+#| echo: true
+#| eval: false
+#| cache: false
+logit_model <- glm(Y ~ X1 + X2, data = df, family = binomial)
+summary(logit_model)
+```
+
+-   Model Fit (Pseudo-$R^2$):
+
+```{r}
+#| echo: true
+#| eval: false
+#| cache: false
+pscl::pR2(logit_model)
+```
+
+-   Calculate predicted probabilities:
+
+```{r}
+#| echo: true
+#| eval: false
+#| cache: false
+predict(logit_model, type = "response")
+```
+
+-   Get changes in probabilities (average marginal effects, keeps other covariates constant for each obs.)
+
+```{r}
+#| echo: true
+#| eval: false
+#| cache: false
+#install.packages("margins")
+library(margins)
+marginal_effects <- margins(logit_model)
+summary(marginal_effects)
+```
+
+## Example Logit: Movie Box-Office-Bombs
+
+\small
+
+```{r setup, include=FALSE}
+options(paged.print = FALSE)
+options(scipen=999)
+library(tidyverse)
+library(yardstick)
+library(margins)
+```
+
+-   1812 movies released in U.S. cinemas between 1995 and 2024 with a budget of at least 25 million dollars.
+
+-   We are interested in if a film is a box office flop ("bomb"). Defined as ROI \< 66% and no international success $\rightarrow$ Y = 1 (is a bomb).
+
+-   Explanatory variables (in the data) are audience and critical scores, as well as film properties like runtime and genre.
+
+-   Source: BoxOfficeMojo + IMDb + RottenTomatoes
+
+::::: columns
+::: column
+\centering
+
+![](images/MV5BZWNmZGYzZjUtODRmOS00ODgzLWE4NWQtMDI3MGUwNjRjYjY0XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg){width="100"}
+:::
+
+::: column
+\scriptsize
+
+**John Carter (2012)**
+
+-   Budget: 250 million USD\
+-   Domestic Box Office: 73 million USD\
+-   Audience Score: 60 & Critic Score: 52 (RT), runtime: 132 minutes\
+-   One of the biggest bombs of all time (Disney took a 200 million dollar write-off)
+:::
+:::::
+
+## Data
+
+\scriptsize
+
+```{r}
+#| echo: true
+#| cache: false
+df_movie <- read_csv("movie_select.csv") 
+
+df_movie %>% 
+  select(title,budget, domestic,runtime,audience_score,critic_score,is_bo_bomb) %>% 
+  arrange(-budget) %>% head(7)
+```
+
+## Distributions
+
+```{r}
+#| echo: false
+#| cache: true
+#| fig-width: 4.0
+#| fig-height: 4.0
+#| out-width: "70%"
+#| fig-align: center
+library(ggplot2)
+library(patchwork)
+df_movie <- df_movie %>%
+  mutate(is_indie = if_else(distri_type == "Independent", 1, 0))
+
+p1 <- ggplot(df_movie, aes(x = factor(is_bo_bomb))) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Box Office Bomb", x = "Is Box Office Bomb", y = "Count") +
+  theme_minimal()
+
+p2 <- ggplot(df_movie, aes(x = runtime)) +
+  geom_histogram(fill = "steelblue", color = "white", bins = 30) +
+  labs(title = "Runtime Distribution", x = "Runtime (minutes)", y = "Count") +
+  theme_minimal()
+
+p3 <- ggplot(df_movie, aes(x = critic_score)) +
+  geom_histogram(aes(y = ..density..), fill = "steelblue", color = "white", bins = 30, alpha = 0.5) +
+  geom_density(color = "red", size = 1) +
+  labs(title = "Critic Score Distribution", x = "Critic Score", y = "Density") +
+  theme_minimal()
+
+p4 <- ggplot(df_movie, aes(x = factor(is_indie))) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Indie Movies", x = "Is Indie", y = "Count") +
+  theme_minimal()
+
+combined_plot <- (p1 + p2) / (p3 + p4)
+combined_plot
+
+```
+
+## Estimate Model
+
+\scriptsize
+```{r}
+#| echo: true
+#| cache: false
+logit_model <- glm(is_bo_bomb ~  runtime + imdb_avg_rating + 
+                     audience_score + critic_score + is_indie + 
+                     ge_action + ge_animation, #+ factor(title_year),
+                   data = df_movie,
+                   family = binomial)
+
+pscl::pR2(logit_model) # Print R2 (McFadden) + eval
+```
+
+## Model Summary
+\tiny
+```{r}
+#| echo: true
+#| cache: false
+summary(logit_model) # Print summary
+```
+
+## Interpreting Coefficients (Odds)
+
+\scriptsize
+
+-   **Runtime (Estimate = 0.0103):**\
+    For each additional minute of runtime, the log-odds of being a box office bomb increase by 0.0103. This corresponds to an odds ratio of $\exp(0.0103) \approx 1.01,$ meaning about a **1% increase** in the odds per minute.
+
+-   **Audience Score (Estimate = -0.0189):**\
+    Each one-point increase in the RT audience score decreases the log-odds by 0.019. This also implies implies a **(exp(-0.018976) - 1)\*100% = -1.879% change** (decrease) in the odds of being a box office bomb per point.
+
+-   **Is Indie (Estimate = 0.8201):**\
+    Being an indie film (when (\text{is\_indie} = 1)) increases the log-odds by 0.82 relative to non-indie films. This translates to an odds ratio of an odds ratio of 2.27, indicating that indie films have approximately **127% higher odds** of being a box office bomb compared to non-indie films.
+
+## Marginal Effects (on P(Y = 1))
+
+\scriptsize
+
+```{r}
+#| echo: true
+#| cache: false
+marginal_effects <- margins(logit_model)
+summary(marginal_effects)
+```
+
+Interpretation. On average:
+
+-   a one-unit decrease in the audience score decreases the probability that the film is a box office bomb by 0.3%.
+
+-   a one-unit increase in the runtime increases the probability that the film is a box office bomb by 0.17%.
+
+-   switching from a non-indie to an indie film increases the predicted probability by roughly 13.1 \[7.9, 18.2\] percentage points.
+
+## Prediction: Predict/classify new data
+
+\scriptsize
+
+**Create a stinker (long and bad reviews)**
+
+```{r}
+#| echo: true
+#| cache: false
+new_bad_film <- data.frame(
+  runtime = 240,  
+  imdb_avg_rating = 6.2, audience_score = 22, critic_score = 34,    # BAD REVIEWS!
+  is_indie = 1, ge_action = 0, ge_animation = 0
+)
+
+predicted_prob <- predict(logit_model, newdata = new_bad_film, type = "response")
+cat("The probability of bombing is: ", predicted_prob)
+```
+
+**Create a masterpiece (great reviews and not too long)**
+
+```{r}
+#| echo: true
+#| cache: false
+new_great_film <- data.frame(
+  runtime = 120,  
+  imdb_avg_rating = 9.2, audience_score = 89, critic_score = 79,    
+  is_indie = 0, ge_action = 0, ge_animation = 1
+)
+
+predicted_prob <- predict(logit_model, newdata = new_great_film, type = "response")
+cat("The probability of bombing is: ", predicted_prob)
+```
+
+## Prediction and Classification (on existing data) and Model Eval
+
+\scriptsize
+
+-   Since logit is a common classifier, we can also evaluate our model on the quality of the models predicition (not just probabilities)
+
+-   We can compare actual classes to predicted classes and look at how often the model is wrong ("cross entropy loss").
+
+**Add the predicted probability as a new column and construct the predicted class (threshold 0.5)**
+
+```{r}
+#| echo: true
+#| cache: false
+set.seed(100)
+df_movie <- df_movie %>%
+  mutate(
+    predicted_prob = predict(logit_model, type = "response"),
+    predicted_class = if_else(predicted_prob >= 0.5, 1, 0)
+  )
+
+df_movie %>% select(title,is_bo_bomb,predicted_prob,predicted_class) %>% 
+  slice_sample(n = 6)
+```
+
+## Confusion Matrix and Metrics (from package yardstick)
+
+\scriptsize
+
+```{r}
+#| echo: true
+#| cache: false
+#| fig-align: center
+df_movie <- df_movie %>%
+  mutate(
+    truth = factor(is_bo_bomb, levels = c(1, 0), labels = c("Yes", "No")),
+    predicted = factor(predicted_class, levels = c(1, 0), labels = c("Yes", "No"))
+  )
+
+cm <- yardstick::conf_mat(df_movie, truth, predicted)
+```
+
+::: columns
+::: column
+```{r}
+#| echo: false
+#| cache: false
+#| fig-align: center
+print(cm)
+
+
+```
+
+:::
+::: column
+![](confusion_matrix.png){width="144"}
+
+::: 
+:::
