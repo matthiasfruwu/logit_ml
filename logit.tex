@@ -148,6 +148,8 @@
 \usepackage{xcolor} % load xcolor for color commands
 \setbeamertemplate{itemize item}{\raise0.5pt\hbox{\textcolor{black}{$\bullet$}}}
 \setbeamerfont{frametitle}{size=\large}
+\usepackage{etoolbox}
+\AtBeginEnvironment{verbatim}{\setlength{\parskip}{0pt}\setlength{\topsep}{0pt}}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -745,6 +747,8 @@ yardstick)}
 
 \begin{columns}[T]
 \begin{column}{0.48\textwidth}
+\vspace{1.1cm}
+
 \begin{verbatim}
           Truth
 Prediction  Yes   No
@@ -757,6 +761,110 @@ Prediction  Yes   No
 \includegraphics[width=1.5in,height=\textheight]{confusion_matrix.png}
 \end{column}
 \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Metrics}
+\phantomsection\label{metrics}
+\scriptsize
+
+There are several metrics than can be used to evaluate a binary
+classification model (can also use yardstick functions), which depend on
+these 4 values.
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{verbatim}
+          Truth
+Prediction  Yes   No
+       Yes   63   50
+       No   369 1330
+\end{verbatim}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{TP }\OtherTok{\textless{}{-}} \DecValTok{63} \CommentTok{\# True positives}
+\NormalTok{TN }\OtherTok{\textless{}{-}} \DecValTok{1330} \CommentTok{\# True negatives}
+\NormalTok{FP }\OtherTok{\textless{}{-}} \DecValTok{50} \CommentTok{\# False positives}
+\NormalTok{FN }\OtherTok{\textless{}{-}} \DecValTok{369} \CommentTok{\# False negatives}
+\end{Highlighting}
+\end{Shaded}
+\end{column}
+\end{columns}
+
+\scriptsize
+
+\begin{itemize}
+\item
+  Accuracy (overall correctness):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(TP }\SpecialCharTok{+}\NormalTok{ TN) }\SpecialCharTok{/}\NormalTok{ (TP }\SpecialCharTok{+}\NormalTok{ TN }\SpecialCharTok{+}\NormalTok{ FP }\SpecialCharTok{+}\NormalTok{ FN)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] 0.7687638
+\end{verbatim}
+\item
+  Sensitivity/Recall: indicates how well the model identifies actual
+  positives.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{TP }\SpecialCharTok{/}\NormalTok{ (TP }\SpecialCharTok{+}\NormalTok{ FN)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] 0.1458333
+\end{verbatim}
+\item
+  Specificity/True Negative Rate: measures how well the model identifies
+  actual negatives.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{TN }\SpecialCharTok{/}\NormalTok{ (TN }\SpecialCharTok{+}\NormalTok{ FP)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] 0.9637681
+\end{verbatim}
+\item
+  Precision: reflects the accuracy of the positive predictions.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{TP }\SpecialCharTok{/}\NormalTok{ (TP }\SpecialCharTok{+}\NormalTok{ FP)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+[1] 0.5575221
+\end{verbatim}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Final thoughts}
+\phantomsection\label{final-thoughts}
+\begin{itemize}
+\item
+  Our model misses a lot of positives. We could experiment with lowering
+  the threshold, if our goal is to find more positives (trade-off
+  between recall and precision).
+\item
+  Use XGBoost or similarly flexible model (always use out-of-sample
+  testing).
+\item
+  Probably lots of missing confounders :(
+\item
+  We could try to add or engineer more features (regressors) like
+  interaction terms, ``text-based stuff'' and crew info.
+\end{itemize}
 \end{frame}
 
 

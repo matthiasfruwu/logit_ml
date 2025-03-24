@@ -16,6 +16,8 @@ format:
       \usepackage{xcolor} % load xcolor for color commands
       \setbeamertemplate{itemize item}{\raise0.5pt\hbox{\textcolor{black}{$\bullet$}}}
       \setbeamerfont{frametitle}{size=\large}
+      \usepackage{etoolbox}
+      \AtBeginEnvironment{verbatim}{\setlength{\parskip}{0pt}\setlength{\topsep}{0pt}}
 ---
 
 ## Recap and Intro
@@ -249,6 +251,7 @@ combined_plot
 ## Estimate Model
 
 \scriptsize
+
 ```{r}
 #| echo: true
 #| cache: false
@@ -262,7 +265,9 @@ pscl::pR2(logit_model) # Print R2 (McFadden) + eval
 ```
 
 ## Model Summary
+
 \tiny
+
 ```{r}
 #| echo: true
 #| cache: false
@@ -376,20 +381,86 @@ df_movie <- df_movie %>%
 cm <- yardstick::conf_mat(df_movie, truth, predicted)
 ```
 
-::: columns
+::::: columns
+::: column
+\vspace{1.1cm}
+
+```{r}
+#| echo: false
+#| cache: false
+#| fig-align: center
+print(cm)
+```
+:::
+
+::: column
+![](confusion_matrix.png){width="144"}
+:::
+:::::
+
+## Metrics
+
+\scriptsize
+
+There are several metrics than can be used to evaluate a binary classification model (can also use yardstick functions), which depend on these 4 values.
+
+::::: columns
 ::: column
 ```{r}
 #| echo: false
 #| cache: false
 #| fig-align: center
 print(cm)
-
-
 ```
-
 :::
+
 ::: column
-![](confusion_matrix.png){width="144"}
-
-::: 
+```{r}
+#| echo: true
+TP <- 63 # True positives
+TN <- 1330 # True negatives
+FP <- 50 # False positives
+FN <- 369 # False negatives
+```
 :::
+:::::
+
+\scriptsize
+
+-   Accuracy (overall correctness):
+
+    ```{r}
+    #| echo: true
+    (TP + TN) / (TP + TN + FP + FN)
+    ```
+
+-   Sensitivity/Recall: indicates how well the model identifies actual positives.
+
+    ```{r}
+    #| echo: true
+    TP / (TP + FN)
+    ```
+
+-   Specificity/True Negative Rate: measures how well the model identifies actual negatives.
+
+    ```{r}
+    #| echo: true
+    TN / (TN + FP)
+    ```
+
+-   Precision: reflects the accuracy of the positive predictions.
+
+    ```{r}
+    #| echo: true
+    TP / (TP + FP)
+    ```
+
+## Final thoughts
+
+-   Our model misses a lot of positives. We could experiment with lowering the threshold, if our goal is to find more positives (trade-off between recall and precision).
+
+-   Use XGBoost or similarly flexible model (always use out-of-sample testing).
+
+-   Probably lots of missing confounders :( 
+
+-   We could try to add or engineer more features (regressors) like interaction terms, "text-based stuff" and crew info.

@@ -66,3 +66,51 @@ accuracy(df_movie, truth, predicted)
 sens(df_movie, truth, predicted)
 spec(df_movie, truth, predicted)
 precision(df_movie, truth, predicted)
+
+
+
+##### XGBOOST #####
+library(tidyverse)
+library(rsample)
+library(xgboost)
+library(yardstick)
+
+# Split data into training (70%) and testing (30%)
+set.seed(144) # for reproducibility
+split <- initial_split(df_movie, prop = 0.7, strata = is_bo_bomb)
+train_data <- training(split)
+test_data  <- testing(split)
+
+# Define features
+features <- c("runtime", "imdb_avg_rating", "audience_score",
+              "critic_score", "is_indie", "ge_action", "ge_animation", "ge_drama_thriller",
+              "ge_scifi_ftsy", "ge_crime_mist", "ge_horror", "ge_romance", "title_year")
+
+# Prepare training matrices
+X_train <- train_data %>% select(all_of(features)) %>% as.matrix()
+y_train <- train_data$is_bo_bomb
+
+X_test <- test_data %>% select(all_of(features)) %>% as.matrix()
+y_test <- test_data$is_bo_bomb
+
+# Train the XGBoost model
+xgb_model <- xgboost(data = X_train, label = y_train,
+                     objective = "binary:logistic",
+                     eval_metric = "logloss",
+                     nrounds = 3000, verbose = 0)
+
+# Predict on test data
+test_data$predicted_prob <- predict(xgb_model, X_test)
+test_data <- test_data %>%
+  mutate(predicted_class = if_else(predicted_prob >= 0.5, 1, 0),
+         truth = factor(is_bo_bomb, levels = c(1,0), labels = c("Yes", "No")),
+         predicted = factor(predicted_class, levels = c(1,0), labels = c("Yes", "No")))
+
+# Evaluate performance on test data
+cm <- conf_mat(test_data, truth, predicted)
+print(cm)
+
+accuracy(test_data, truth, predicted)
+sens(test_data, truth, predicted)
+spec(test_data, truth, predicted)
+precision(test_data, truth, predicted)
