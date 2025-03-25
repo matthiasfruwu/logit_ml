@@ -271,7 +271,39 @@ Logistic Regression
 \phantomsection\label{graphical}
 \includegraphics[width=3.64583in,height=\textheight]{images/linear-regression-vs-logistic-regression.png}
 
-As we change X, we change the probability that Y becomes 1.
+As we change X, we change the \textbf{probability} that Y becomes 1.
+\end{frame}
+
+\begin{frame}{Quick recap: Probability and Odds}
+\phantomsection\label{quick-recap-probability-and-odds}
+\footnotesize
+
+Probability \(P\) is a measure that quantifies how likely an event \(Y\)
+is to occur. It is a number between 0 (impossible) and 1 (certain).
+
+\textbf{Example} Consider a \emph{fair coin toss} where the random
+variable \(Y\) takes on the outcomes \(H\) (heads) and \(T\) (tails).
+
+\begin{itemize}
+\item
+  \textbf{Probability}\\
+  \(P(Y=H) = 0.5 \qquad\qquad P(Y=T) = 0.5 = 1 - P(Y=H)\)
+\item
+  \textbf{Odds}\\
+  The odds represent the ratio of the probability that the event occurs
+  to the probability that it does not occur. For heads: \[
+  \text{Odds}(H) = \frac{P(Y=H)}{1 - P(Y=H)} = \frac{0.5}{0.5} = 1.
+  \]
+\item
+  \textbf{Log-Odds (Logit)} The log-odds, or logit, is the natural
+  logarithm of the odds: \[
+  \text{Logit}(H) = \ln\left(\frac{P(Y=H)}{1 - P(Y=H)}\right) = \ln(1) = 0.
+  \]
+\item
+  \textbf{Useful identity for binary outcome} \[
+    P(Y = 1) = \frac{\text{Odds(1)}}{1 + \text{Odds(1)}}
+  \]
+\end{itemize}
 \end{frame}
 
 \begin{frame}{Basics}
@@ -287,7 +319,7 @@ As we change X, we change the probability that Y becomes 1.
 \end{itemize}
 
 \[
-  P(Y = 1 \mid X) = \frac{1}{1 + e^{-\textcolor{blue}{\beta_0 + \beta_1 X_1 + \dots + \beta_k X_k}}}
+  P(Y = 1 \mid X) = \frac{1}{1 + e^{-\beta_0 + \beta_1 X_1 + \dots + \beta_k X_k}}
 \]
 
 \begin{itemize}
@@ -298,8 +330,8 @@ As we change X, we change the probability that Y becomes 1.
 \end{itemize}
 
 \[
-\log\left(\frac{P(Y = 1 \mid X)}{1 - P(Y = 1 \mid X)}\right) = \textcolor{blue}{\beta_0 + \beta_1 X_1 + \dots + \beta_k X_k}
-\]
+    \log\left(\underbrace{\frac{P(Y = 1 \mid X)}{1 - P(Y = 1 \mid X)}}_{\text{Odds}}\right) = \beta_0 + \beta_1 X_1 + \dots + \beta_k X_k.
+    \]
 \end{frame}
 
 \begin{frame}{Odds and Interpretation}
@@ -310,40 +342,41 @@ As we change X, we change the probability that Y becomes 1.
 \item
   We can interpret a coefficient \(\beta_k\) as changes to the log-odds;
   and \(\exp(\beta_k)\) as changes to odds. \[
-  \log\left(\underbrace{\frac{P(Y = 1 \mid X)}{1 - P(Y = 1 \mid X)}}_{\text{Odds}}\right) = \beta_0 + \beta_1 X_1 + \dots + \beta_k X_k.
+  \log\left(\underbrace{\frac{P(Y = 1 \mid X)}{P(Y = 0 \mid X)}}_{\text{Odds}}\right) = \beta_0 + \beta_1 X_1 + \dots + \textcolor{blue}{\beta_k}\,\textcolor{blue}{X_k}.
   \]
 \item
   Odds reflect how likely an event is compared to it not happening
-  (``ratio of 1 to 0''), rather than its share of all outcomes (which
-  would be the probability).
+  (``ratio of Y=1 to Y=0''), rather than its share of all outcomes
+  (which would be the probability).
 \item
   \textbf{Example}: The baseline odds for 100 customers (20 purchase
-  complete, 80 cart abandoned). Then you estimate \(\beta_k = 0.5\):
+  complete, 80 cart abandoned). Then you estimate
+  \(\textcolor{blue}{\beta_k} = 0.5\):
 \end{itemize}
 
 \[
-  \text{Odds} = \frac{20}{80} = 0.25 \quad\quad e^{\beta_k = 0.5} \approx 1.65 \quad\quad \text{New Odds} = 0.25 \times 1.65 \approx 0.4125.
+  \text{Odds} = \frac{20}{80} = 0.25 \quad\quad \exp(\beta_k = 0.5) \approx 1.65 \quad\quad \text{New Odds} = 0.25 \times 1.65 \approx 0.4125.
 \]
 
 \begin{itemize}
 \tightlist
 \item
-  For a one-unit increase in \(\beta_k\), the odds increase by about
+  For a one-unit increase in \(X_k\), the odds increase by about
   \((\exp(\beta) - 1) \cdot 100 \% = 65\%\). However, the effect on the
   actual probability depends on the starting value of the regressors.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Probabilites}
-\phantomsection\label{probabilites}
+\begin{frame}{Probabilities}
+\phantomsection\label{probabilities}
 \small
 
 \begin{itemize}
 \item
   Coefficients from the regression output can be directly interpreted as
   changes to (log-)odds. If \(\beta_1\) \textgreater{} 0, odds increase,
-  as well as probabilities (and reverse). The change does not depend on
-  the actual level of X.
+  as well as probabilities (and reverse). The \emph{change in odds} does
+  not depend on the actual level of X.
 \item
   The reason: Odds are multiplicative, log-odds are additive (changes
   are ``just added'').
@@ -351,23 +384,24 @@ As we change X, we change the probability that Y becomes 1.
   However, the change in the outcome probability P(\(Y = 1 \mid X\))
   depends on the starting level of the covariates.
 \item
-  Also note: \[
+  Remember: \[
   P(Y = 1) = \frac{\text{Odds}}{1 + \text{Odds}}
   \]
 \item
-  Previous Example (odds before: \(0.25\), odds after: \(0.41\))
+  Previous Example (odds before: \(0.25\), odds after: \(0.41\)).
+  Probabilities:
 \end{itemize}
 
 \[
-p_{\text{1}} = \frac{20}{20+80} = \frac{0.25}{1 + 1.25} = 0.2, \quad  p_{\text{new}} \approx \frac{0.4125}{1.4125} \approx 0.291.
+p_{\text{old}} = \frac{20}{20+80} = \frac{0.25}{1 + 0.25} = 0.2, \quad  p_{\text{new}} \approx \frac{0.41}{1 + 0.41} \approx 0.291.
 \]
 
 \begin{itemize}
 \tightlist
 \item
   Interpretation: For the given baseline probability/odds, increasing
-  the explanatory variable by one unit increases the probability of
-  \(Y\) by approx. \(9.1\%\).
+  the explanatory variable \(X_k\) by one unit increases the probability
+  of \(Y = 1\) by approx. \(9.1\%\).
 \end{itemize}
 \end{frame}
 
@@ -554,10 +588,6 @@ glm(formula = is_bo_bomb ~ runtime + imdb_avg_rating + audience_score +
     critic_score + is_indie + ge_action + ge_animation, family = binomial, 
     data = df_movie)
 
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--1.6731  -0.7543  -0.5323  -0.2811   2.8183  
-
 Coefficients:
                  Estimate Std. Error z value   Pr(>|z|)    
 (Intercept)      1.470635   0.543181   2.707   0.006780 ** 
@@ -595,16 +625,16 @@ Number of Fisher Scoring iterations: 4
 \item
   \textbf{Audience Score (Estimate = -0.0189):}\\
   Each one-point increase in the RT audience score decreases the
-  log-odds by 0.019. This also implies implies a \textbf{(exp(-0.018976)
-  - 1)*100\% = -1.879\% change} (decrease) in the odds of being a box
+  log-odds by 0.019. This also implies a \textbf{(exp(-0.018976) -
+  1)*100\% = -1.879\% change} (decrease) in the odds of being a box
   office bomb per point.
 \item
   \textbf{Is Indie (Estimate = 0.8201):}\\
   Being an indie film (when (\text{is\_indie} = 1)) increases the
   log-odds by 0.82 relative to non-indie films. This translates to an
-  odds ratio of an odds ratio of 2.27, indicating that indie films have
-  approximately \textbf{127\% higher odds} of being a box office bomb
-  compared to non-indie films.
+  odds ratio of 2.27, indicating that indie films have approximately
+  \textbf{127\% higher odds} of being a box office bomb compared to
+  non-indie films.
 \end{itemize}
 \end{frame}
 
@@ -634,7 +664,7 @@ Interpretation. On average:
 
 \begin{itemize}
 \item
-  a one-unit decrease in the audience score decreases the probability
+  a one-unit increase in the audience score decreases the probability
   that the film is a box office bomb by 0.3\%.
 \item
   a one-unit increase in the runtime increases the probability that the
@@ -649,7 +679,7 @@ Interpretation. On average:
 \phantomsection\label{prediction-predictclassify-new-data}
 \scriptsize
 
-\textbf{Create a stinker (long and bad reviews)}
+\textbf{Create a stinker (ong runtime and negative reviews)}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -771,7 +801,7 @@ Prediction  Yes   No
 \phantomsection\label{metrics}
 \scriptsize
 
-There are several metrics than can be used to evaluate a binary
+There are several metrics that can be used to evaluate a binary
 classification model (can also use yardstick functions), which depend on
 these 4 values.
 
